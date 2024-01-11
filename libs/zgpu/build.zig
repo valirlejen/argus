@@ -1,8 +1,14 @@
 const std = @import("std");
-const system_sdk = @import("system_sdk");
 
+const system_sdk = @import("system_sdk");
 const zglfw = @import("zglfw");
 const zpool = @import("zpool");
+
+pub const path = getPath();
+
+inline fn getPath() []const u8 {
+    return std.fs.path.dirname(@src().file) orelse unreachable;
+}
 
 const default_options = struct {
     const uniforms_buffer_size = 4 * 1024 * 1024;
@@ -103,15 +109,15 @@ pub const Package = struct {
         exe.root_module.link_libc = true;
         exe.root_module.link_libcpp = true;
 
-        exe.root_module.addIncludePath(.{ .path = thisDir() ++ "/libs/dawn/include" });
-        exe.root_module.addIncludePath(.{ .path = thisDir() ++ "/src" });
+        exe.root_module.addIncludePath(.{ .path = path ++ "/libs/dawn/include" });
+        exe.root_module.addIncludePath(.{ .path = path ++ "/src" });
 
         exe.root_module.addCSourceFile(.{
-            .file = .{ .path = thisDir() ++ "/src/dawn.cpp" },
+            .file = .{ .path = path ++ "/src/dawn.cpp" },
             .flags = &.{ "-std=c++17", "-fno-sanitize=undefined" },
         });
         exe.root_module.addCSourceFile(.{
-            .file = .{ .path = thisDir() ++ "/src/dawn_proc.c" },
+            .file = .{ .path = path ++ "/src/dawn_proc.c" },
             .flags = &.{"-fno-sanitize=undefined"},
         });
     }
@@ -119,7 +125,7 @@ pub const Package = struct {
     pub fn makeTestStep(pkg: Package, b: *std.Build) *std.Build.Step {
         const tests = b.addTest(.{
             .name = "zgpu-tests",
-            .root_source_file = .{ .path = thisDir() ++ "/src/zgpu.zig" },
+            .root_source_file = .{ .path = path ++ "/src/zgpu.zig" },
             .target = pkg.target,
             .optimize = pkg.optimize,
         });
@@ -158,7 +164,7 @@ pub fn package(
     const zgpu_options = step.createModule();
 
     const zgpu = b.addModule("zgpu", .{
-        .root_source_file = .{ .path = thisDir() ++ "/src/zgpu.zig" },
+        .root_source_file = .{ .path = path ++ "/src/zgpu.zig" },
         .imports = &.{
             .{ .name = "zgpu_options", .module = zgpu_options },
             .{ .name = "zglfw", .module = args.deps.zglfw.zglfw },
@@ -252,8 +258,4 @@ pub fn build(b: *std.Build) void {
 
     const test_step = b.step("test", "Run zgpu tests");
     test_step.dependOn(pkg.makeTestStep(b));
-}
-
-inline fn thisDir() []const u8 {
-    return comptime std.fs.path.dirname(@src().file) orelse ".";
 }
