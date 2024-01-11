@@ -1,4 +1,5 @@
 const std = @import("std");
+const system_sdk = @import("system_sdk");
 
 pub const Options = struct {
     enable_ztracy: bool = false,
@@ -89,7 +90,7 @@ pub fn package(
             },
             .macos => {
                 ztracy_c_cpp.root_module.addFrameworkPath(
-                    .{ .path = thisDir() ++ "/../system-sdk/macos12/System/Library/Frameworks" },
+                    .{ .path = system_sdk.path ++ "/macos12/System/Library/Frameworks" },
                 );
             },
             else => {},

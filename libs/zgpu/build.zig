@@ -1,4 +1,8 @@
 const std = @import("std");
+const system_sdk = @import("system_sdk");
+
+const zglfw = @import("zglfw");
+const zpool = @import("zpool");
 
 const default_options = struct {
     const uniforms_buffer_size = 4 * 1024 * 1024;
@@ -29,31 +33,35 @@ pub const Options = struct {
 };
 
 pub const Package = struct {
+    target: std.Build.ResolvedTarget,
+    optimize: std.builtin.OptimizeMode,
     options: Options,
     zgpu: *std.Build.Module,
     zgpu_options: *std.Build.Module,
+    deps: struct {
+        zglfw: zglfw.Package,
+        zpool: zpool.Package,
+    },
 
     pub fn link(pkg: Package, exe: *std.Build.Step.Compile) void {
-        const target = exe.rootModuleTarget();
-
         exe.root_module.addImport("zgpu", pkg.zgpu);
         exe.root_module.addImport("zgpu_options", pkg.zgpu_options);
 
         const b = exe.step.owner;
 
-        switch (target.os.tag) {
+        switch (pkg.target.result.os.tag) {
             .windows => {
                 const dawn_dep = b.dependency("dawn_x86_64_windows_gnu", .{});
                 exe.root_module.addLibraryPath(.{ .path = dawn_dep.builder.build_root.path.? });
                 exe.root_module.addLibraryPath(.{
-                    .path = thisDir() ++ "/../system-sdk/windows/lib/x86_64-windows-gnu",
+                    .path = system_sdk.path ++ "/windows/lib/x86_64-windows-gnu",
                 });
 
                 exe.root_module.linkSystemLibrary("ole32", .{});
                 exe.root_module.linkSystemLibrary("dxguid", .{});
             },
             .linux => {
-                if (target.cpu.arch.isX86()) {
+                if (pkg.target.result.cpu.arch.isX86()) {
                     const dawn_dep = b.dependency("dawn_x86_64_linux_gnu", .{});
                     exe.root_module.addLibraryPath(.{ .path = dawn_dep.builder.build_root.path.? });
                 } else {
@@ -63,16 +71,16 @@ pub const Package = struct {
             },
             .macos => {
                 exe.root_module.addFrameworkPath(.{
-                    .path = thisDir() ++ "/../system-sdk/macos12/System/Library/Frameworks",
+                    .path = system_sdk.path ++ "/macos12/System/Library/Frameworks",
                 });
                 exe.root_module.addSystemIncludePath(.{
-                    .path = thisDir() ++ "/../system-sdk/macos12/usr/include",
+                    .path = system_sdk.path ++ "/macos12/usr/include",
                 });
                 exe.root_module.addLibraryPath(.{
-                    .path = thisDir() ++ "/../system-sdk/macos12/usr/lib",
+                    .path = system_sdk.path ++ "/macos12/usr/lib",
                 });
 
-                if (target.cpu.arch.isX86()) {
+                if (pkg.target.result.cpu.arch.isX86()) {
                     const dawn_dep = b.dependency("dawn_x86_64_macos", .{});
                     exe.root_module.addLibraryPath(.{ .path = dawn_dep.builder.build_root.path.? });
                 } else {
@@ -107,17 +115,30 @@ pub const Package = struct {
             .flags = &.{"-fno-sanitize=undefined"},
         });
     }
+
+    pub fn makeTestStep(pkg: Package, b: *std.Build) *std.Build.Step {
+        const tests = b.addTest(.{
+            .name = "zgpu-tests",
+            .root_source_file = .{ .path = thisDir() ++ "/src/zgpu.zig" },
+            .target = pkg.target,
+            .optimize = pkg.optimize,
+        });
+        pkg.link(tests);
+        pkg.deps.zglfw.link(tests);
+        pkg.deps.zpool.link(tests);
+        return &b.addRunArtifact(tests).step;
+    }
 };
 
 pub fn package(
     b: *std.Build,
-    _: std.Build.ResolvedTarget,
-    _: std.builtin.Mode,
+    target: std.Build.ResolvedTarget,
+    optimize: std.builtin.Mode,
     args: struct {
         options: Options = .{},
         deps: struct {
-            zglfw: *std.Build.Module,
-            zpool: *std.Build.Module,
+            zglfw: zglfw.Package,
+            zpool: zpool.Package,
         },
     },
 ) Package {
@@ -140,15 +161,21 @@ pub fn package(
         .root_source_file = .{ .path = thisDir() ++ "/src/zgpu.zig" },
         .imports = &.{
             .{ .name = "zgpu_options", .module = zgpu_options },
-            .{ .name = "zglfw", .module = args.deps.zglfw },
-            .{ .name = "zpool", .module = args.deps.zpool },
+            .{ .name = "zglfw", .module = args.deps.zglfw.zglfw },
+            .{ .name = "zpool", .module = args.deps.zpool.zpool },
         },
     });
 
     return .{
+        .target = target,
+        .optimize = optimize,
         .options = args.options,
         .zgpu = zgpu,
         .zgpu_options = zgpu_options,
+        .deps = .{
+            .zglfw = args.deps.zglfw,
+            .zpool = args.deps.zpool,
+        },
     };
 }
 
@@ -156,10 +183,10 @@ pub fn build(b: *std.Build) void {
     const optimize = b.standardOptimizeOption(.{});
     const target = b.standardTargetOptions(.{});
 
-    const zglfw = b.dependency("zglfw", .{});
-    const zpool = b.dependency("zpool", .{});
+    const zglfw_pkg = zglfw.package(b, target, optimize, .{});
+    const zpool_pkg = zpool.package(b, target, optimize, .{});
 
-    _ = package(b, target, optimize, .{
+    const pkg = package(b, target, optimize, .{
         .options = .{
             .uniforms_buffer_size = b.option(
                 u64,
@@ -218,10 +245,13 @@ pub fn build(b: *std.Build) void {
             ) orelse default_options.pipeline_layout_pool_size,
         },
         .deps = .{
-            .zglfw = zglfw.module("zglfw"),
-            .zpool = zpool.module("zpool"),
+            .zglfw = zglfw_pkg,
+            .zpool = zpool_pkg,
         },
     });
+
+    const test_step = b.step("test", "Run zgpu tests");
+    test_step.dependOn(pkg.makeTestStep(b));
 }
 
 inline fn thisDir() []const u8 {

@@ -1,4 +1,5 @@
 const std = @import("std");
+const system_sdk = @import("system_sdk");
 
 pub const Package = struct {
     zaudio: *std.Build.Module,
@@ -35,13 +36,13 @@ pub fn package(
 
     if (host.os.tag == .macos) {
         zaudio_c_cpp.root_module.addFrameworkPath(.{
-            .path = thisDir() ++ "/../system-sdk/macos12/System/Library/Frameworks",
+            .path = system_sdk.path ++ "/macos12/System/Library/Frameworks",
         });
         zaudio_c_cpp.root_module.addSystemIncludePath(.{
-            .path = thisDir() ++ "/../system-sdk/macos12/usr/include",
+            .path = system_sdk.path ++ "/macos12/usr/include",
         });
         zaudio_c_cpp.root_module.addLibraryPath(.{
-            .path = thisDir() ++ "/../system-sdk/macos12/usr/lib",
+            .path = system_sdk.path ++ "/macos12/usr/lib",
         });
         zaudio_c_cpp.root_module.linkFramework("CoreAudio", .{});
         zaudio_c_cpp.root_module.linkFramework("CoreFoundation", .{});
