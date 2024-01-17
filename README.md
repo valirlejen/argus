@@ -8,16 +8,16 @@ We build game development ecosystem for [Zig programming language](https://zigla
 * Cross-platform [sample applications](#sample-applications-native-wgpu)
 * DirectX 12 [sample applications](#sample-applications-directx-12)
 
-Please note that Zig is still in development. Our [main](https://github.com/zig-gamedev/zig-gamedev/tree/main) branch tracks a periodically nominated version of the Zig compiler, this is **0.12.0-dev.2139+e025ad7b4** currently, which can be downloaded using the links below.
+Please note that Zig is still in development. Our [main](https://github.com/zig-gamedev/zig-gamedev/tree/main) branch tracks a periodically nominated version of the Zig compiler, this is **0.12.0-dev.1871+e426ae43a** currently, which can be downloaded using the links below.
 
 | OS/Arch         | Download link               |
 | --------------- | --------------------------- |
-| Windows x86_64  | [zig-windows-x86_64-0.12.0-dev.2139+e025ad7b4.zip](https://ziglang.org/builds/zig-windows-x86_64-0.12.0-dev.2139+e025ad7b4.zip) |
-| Linux x86_64    | [zig-linux-x86_64-0.12.0-dev.2139+e025ad7b4.tar.xz](https://ziglang.org/builds/zig-linux-x86_64-0.12.0-dev.2139+e025ad7b4.tar.xz) |
-| macOS x86_64    | [zig-macos-x86_64-0.12.0-dev.2139+e025ad7b4.tar.xz](https://ziglang.org/builds/zig-macos-x86_64-0.12.0-dev.2139+e025ad7b4.tar.xz) |
-| macOS aarch64   | [zig-macos-aarch64-0.12.0-dev.2139+e025ad7b4.tar.xz](https://ziglang.org/builds/zig-macos-aarch64-0.12.0-dev.2139+e025ad7b4.tar.xz) |
+| Windows x86_64  | [zig-windows-x86_64-0.12.0-dev.1871+e426ae43a.zip](https://ziglang.org/builds/zig-windows-x86_64-0.12.0-dev.1871+e426ae43a.zip) |
+| Linux x86_64    | [zig-linux-x86_64-0.12.0-dev.1871+e426ae43a.tar.xz](https://ziglang.org/builds/zig-linux-x86_64-0.12.0-dev.1871+e426ae43a.tar.xz) |
+| macOS x86_64    | [zig-macos-x86_64-0.12.0-dev.1871+e426ae43a.tar.xz](https://ziglang.org/builds/zig-macos-x86_64-0.12.0-dev.1871+e426ae43a.tar.xz) |
+| macOS aarch64   | [zig-macos-aarch64-0.12.0-dev.1871+e426ae43a.tar.xz](https://ziglang.org/builds/zig-macos-aarch64-0.12.0-dev.1871+e426ae43a.tar.xz) |
 
-If you need to use a more recent version of Zig, you may want to use our [unstable](https://github.com/zig-gamedev/zig-gamedev/tree/unstable) branch. But this is not generally recommended.
+If you need to use a more recent version of Zig, you may want to use our [unstable](https://github.com/zig-gamedev/zig-gamedev/tree/unstable) branch. But this is not generally recommended. Curently supports Zig **0.12.0-dev.2139+e025ad7b4**.
 
 To get started on Windows/Linux/macOS try out [physically based rendering (wgpu)](https://github.com/zig-gamedev/zig-gamedev/tree/main/samples/physically_based_rendering_wgpu) sample:
 ```sh
@@ -129,7 +129,7 @@ pub fn build(b: *std.Build) void {
 ## Vision
 * Very modular "toolbox of libraries", user can use only the components she needs
 * Works on Windows, macOS and Linux
-* Has zero dependency except [Zig compiler (master)](https://ziglang.org/download/) and `git` with [Git LFS](https://git-lfs.github.com/) - no Visual Studio, Build Tools, Windows SDK, gcc, dev packages, system headers/libs, cmake, ninja, etc. is needed
+* Has zero dependency except [Zig](https://ziglang.org/) and `git` with [Git LFS](https://git-lfs.github.com/) - no Visual Studio, Build Tools, Windows SDK, gcc, dev packages, system headers/libs, cmake, ninja, etc. is needed
 * Building is as easy as running `zig build` (see: [Building](#building-sample-applications))
 * Libraries are written from scratch in Zig *or* provide Ziggified bindings for carefully selected C/C++ libraries
 * Uses native wgpu implementation ([Dawn](https://github.com/michal-z/dawn-bin)) or OpenGL for cross-platform graphics and DirectX 12 for low-level graphics on Windows
